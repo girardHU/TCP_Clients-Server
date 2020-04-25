@@ -1,13 +1,16 @@
 #include "connect.h"
 
 int main(int argc, char** argv) {
-  int                 sockfd;
+  int                 sockfd, rotation;
   struct sockaddr_in  serv_addr;
   char                sendline[MAXBITS];
   char                recvline[MAXBITS];
 
   fd_set readfs;
-  fd_set writefs;
+
+  struct timeval timeout;
+  timeout.tv_sec = 1;
+  timeout.tv_usec = 0;
 
   if (argc != 3)
     err_n_die(NULL, "usage: %s <server_address> <server_port>\n", argv[0]);
@@ -37,30 +40,29 @@ int main(int argc, char** argv) {
   // if (fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL) | O_NONBLOCK) < 0)
   //   err_n_die(&sockfd, "could not set the socket on a non blocking mode\n");
 
+    rotation = 0;
+
   while (TRUE) {
     FD_ZERO(&readfs);
-    FD_ZERO(&writefs);
     memset(recvline, '\0', MAXBITS);
     memset(sendline, '\0', MAXBITS);
 
-    // FD_SET(sockfd, &readfs);
-    // FD_SET(sockfd, &writefs);
+    FD_SET(sockfd, &readfs);
 
-    // if ( select(sockfd + 1, &readfs, NULL, NULL, NULL) < 0)
-    //   printf("select error\n");
-
-    // We're connected. read message from stdin
-    printf("\nType your message then press enter :\n");
-    read(0, sendline, MAXBITS);
+    if ( select(sockfd + 1, &readfs, NULL, NULL, &timeout) < 0)
+      printf("select error\n");
 
     // Send the request -- making sure you send it all
-    if (sendline[0] != '\0')
-      if ( client_requestServer(&sockfd, sendline) == -1)
-        break;
+    if ( client_requestServer(&sockfd, &rotation) == -1)
+      break;
 
     // Now read the server's response
-    if ( client_readServer(&sockfd) == -1)
-      break;
+    if (FD_ISSET(sockfd, &readfs)) {
+      if ( client_readServer(&sockfd) == -1)
+        break;
+    }
+    rotation++;
+    sleep(1);
   }
 
   printf("closing...\n");

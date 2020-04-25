@@ -14,17 +14,17 @@
  *          1 -> socket was not opened
  *          0 -> success
  */
-int client_requestServer(int* server_socket, char* request_body) {
+int client_requestServer(int* server_socket, int* request_body) {
   if (*server_socket <= 0)
     return (1);
 
-  if (send(*server_socket, request_body, sizeof(request_body), MSG_NOSIGNAL) < 0)
+  if (send(*server_socket, request_body, sizeof(*request_body), MSG_NOSIGNAL) < 0)
     err_n_die(server_socket, "write error!\n");
   else if (errno == EPIPE) {
     printf("server down...\n");
     return (-1);
   }
-  printf("message sent\n");
+  printf("message sent: %d\n", *request_body);
   return (0);
 }
 
@@ -52,6 +52,6 @@ int client_readServer(int* server_socket) {
     perror("No message received from the server ");
     return (1);
   }
-  printf("received from server : %s\n", msg_received);
+  printf("received from server : %s\n\n", msg_received);
   return (0);
 }

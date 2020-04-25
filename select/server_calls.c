@@ -46,13 +46,56 @@ int server_storeClient(int* sock_array, int* new_sock) {
  *          1 -> fd selected was not opened
  *          0 -> success
  */
-int server_clientClose(int* sock_array, int ref) {
+int server_closeClient(int* sock_array, int ref) {
   if (sock_array[ref] == 0)
     return (1);
 
   printf("client on reference %d just disconnected\n", ref);
   close(sock_array[ref]);
   sock_array[ref] = 0;
+  return (0);
+}
+
+/**
+ * DESC:           takes a pointer on a socket (fd), try to reacv a message from it, displayes it and send back call the server_respClient with a "OK\n" string in param
+ * 
+ * PARAMETERS:
+ *      int* client               pointer on an int being a file descriptor of a socket
+ *      int ref                   reference of the client in the socket array
+ * 
+ * RETURN:
+ *  Type int
+ *  Values: 
+ *          1 -> fd given was not opened
+ *         -1 -> could not send the message
+ *         -2 -> client has disconnected
+ *          0 -> success
+ */
+int server_readClient(int* sock_array, int ref) {
+  // printf("start server_readClient\n");
+  int recvline, n, i;
+
+  recvline = 0;
+  n = 0;
+
+  if (sock_array[ref] == 0)
+    return (1);
+
+  if ( (n = recv(sock_array[ref], &recvline, MAXBITS, 0) == 0)) {
+    server_closeClient(sock_array, ref);
+    return (-2);
+  }
+  if (n == -1) {
+    printf("error upon receiving from the client\n");
+    return (-1);
+  }
+    
+  printf("received %d\n", recvline);
+
+  for (i = 0; i < MAXCLIENTS; i++)
+    server_respClient(sock_array, i, &recvline);
+
+  // printf("end server_readClient\n");
   return (0);
 }
 
@@ -70,60 +113,16 @@ int server_clientClose(int* sock_array, int ref) {
  *         -1 -> could not send the message
  *          0 -> success
  */
-int server_clientResp(int* sock_array, int ref, char* sendline) {
+int server_respClient(int* sock_array, int ref, int* sendline) {
   if (sock_array[ref] == 0)
     return (1);
 
-  if ( send(sock_array[ref], sendline, sizeof(sendline), MSG_NOSIGNAL) == -1) {
-    server_clientClose(sock_array, ref);
+  if ( send(sock_array[ref], sendline, sizeof(*sendline), MSG_NOSIGNAL) == -1) {
+    server_closeClient(sock_array, ref);
     perror("can't respond to the client ");
     return (-1);
   }
 
-  return (0);
-}
-
-/**
- * DESC:           takes a pointer on a socket (fd), try to reacv a message from it, displayes it and send back call the server_clientResp with a "OK\n" string in param
- * 
- * PARAMETERS:
- *      int* client               pointer on an int being a file descriptor of a socket
- *      int ref                   reference of the client in the socket array
- * 
- * RETURN:
- *  Type int
- *  Values: 
- *          1 -> fd given was not opened
- *         -1 -> could not send the message
- *         -2 -> client has disconnected
- *          0 -> success
- */
-int server_clientRead(int* sock_array, int ref) {
-  // printf("start server_clientRead\n");
-  int   n, i;
-  char  buff[MAXBITS];
-
-  n = 0;
-  memset(buff, '\0', MAXBITS);
-
-  if (sock_array[ref] == 0)
-    return (1);
-
-  if ( (n = recv(sock_array[ref], buff, MAXBITS, 0) == 0)) {
-    server_clientClose(sock_array, ref);
-    return (-2);
-  }
-  if (n == -1) {
-    printf("error upon receiving from the client\n");
-    return (-1);
-  }
-    
-  printf("received %s", buff);
-
-  for (i = 0; i < MAXCLIENTS; i++)
-    server_clientResp(sock_array, i, buff);
-
-  // printf("end server_clientRead\n");
   return (0);
 }
 

@@ -25,13 +25,13 @@ void err_n_die(int* sock, const char* fmt, ...);
 
 // server_calls.c
 int server_storeClient(int* sock_array, int* new_sock);
-int server_clientClose(int* sock_array, int ref);
-int server_clientResp(int* sock_array, int ref, char* sendline);
-int server_clientRead(int* sock_array, int ref);
+int server_closeClient(int* sock_array, int ref);
+int server_respClient(int* sock_array, int ref, int* sendline);
+int server_readClient(int* sock_array, int ref);
 int server_alertNoSlot(int* sock);
 
 // client_calls.c
-int client_requestServer(int* server_socket, char* request_body);
+int client_requestServer(int* server_socket, int* request_body);
 int client_readServer(int* server_socket);
 
 #endif

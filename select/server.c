@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
     for (i = 0; i < MAXCLIENTS; i++) {
       fd = clients_sock[i];
       if (FD_ISSET(fd, &readfs))
-        server_clientRead(clients_sock, i);
+        server_readClient(clients_sock, i);
     }
     printf("one loop\n\n");
   }
