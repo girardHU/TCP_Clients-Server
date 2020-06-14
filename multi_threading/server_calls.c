@@ -46,7 +46,7 @@ int server_storeClient(int* sock_array, int* new_sock) {
  *          1 -> fd selected was not opened
  *          0 -> success
  */
-int server_clientClose(int* sock_array, int ref) {
+int server_closeClient(int* sock_array, int ref) {
   if (sock_array[ref] == 0)
     return (1);
 
@@ -70,12 +70,12 @@ int server_clientClose(int* sock_array, int ref) {
  *         -1 -> could not send the message
  *          0 -> success
  */
-int server_clientResp(int* sock_array, int ref, char* sendline) {
+int server_respClient(int* sock_array, int ref, char* sendline) {
   if (sock_array[ref] == 0)
     return (1);
 
   if ( send(sock_array[ref], sendline, sizeof(sendline), MSG_NOSIGNAL) == -1) {
-    server_clientClose(sock_array, ref);
+    server_closeClient(sock_array, ref);
     perror("can't respond to the client ");
     return (-1);
   }
@@ -84,7 +84,7 @@ int server_clientResp(int* sock_array, int ref, char* sendline) {
 }
 
 /**
- * DESC:           takes a pointer on a socket (fd), try to reacv a message from it, displayes it and send back call the server_clientResp with a "OK\n" string in param
+ * DESC:           takes a pointer on a socket (fd), try to reacv a message from it, displayes it and send back call the server_respClient with a "OK\n" string in param
  * 
  * PARAMETERS:
  *      int* client               pointer on an int being a file descriptor of a socket
@@ -98,8 +98,8 @@ int server_clientResp(int* sock_array, int ref, char* sendline) {
  *         -2 -> client has disconnected
  *          0 -> success
  */
-int server_clientRead(int* sock_array, int ref) {
-  // printf("start server_clientRead\n");
+int server_readClient(int* sock_array, int ref) {
+  // printf("start server_readClient\n");
   int   n, i;
   char  buff[MAXBITS];
 
@@ -110,7 +110,7 @@ int server_clientRead(int* sock_array, int ref) {
     return (1);
 
   if ( (n = recv(sock_array[ref], buff, MAXBITS, 0) == 0)) {
-    server_clientClose(sock_array, ref);
+    server_closeClient(sock_array, ref);
     return (-2);
   }
   if (n == -1) {
@@ -121,9 +121,9 @@ int server_clientRead(int* sock_array, int ref) {
   printf("received %s", buff);
 
   for (i = 0; i < MAXCLIENTS; i++)
-    server_clientResp(sock_array, i, buff);
+    server_respClient(sock_array, i, buff);
 
-  // printf("end server_clientRead\n");
+  // printf("end server_readClient\n");
   return (0);
 }
 

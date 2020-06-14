@@ -33,9 +33,9 @@ void err_n_die(int* sock, const char* fmt, ...);
 
 // server_calls.c
 int server_storeClient(int* sock_array, int* new_sock);
-int server_clientClose(int* sock_array, int ref);
-int server_clientResp(int* sock_array, int ref, char* sendline);
-int server_clientRead(int* sock_array, int ref);
+int server_closeClient(int* sock_array, int ref);
+int server_respClient(int* sock_array, int ref, char* sendline);
+int server_readClient(int* sock_array, int ref);
 int server_alertNoSlot(int* sock);
 
 void* connection_handler(void* ptr);
